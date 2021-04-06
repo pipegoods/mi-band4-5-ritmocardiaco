@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hola mundo - Manilla</title>
+    <link rel="stylesheet" href="css/bulma.min.css">
+</head>
+
+<body>
+    <br><br>
+    <div class="container">
+        <article class="message">
+            <div class="message-header">
+                <p>Conecta tu Mi Band 4-5 para obtener tu Ritmo Cardiaco</p>
+            </div>
+            <div class="message-body">
+                <p class="is-size-3	"><b> Auth Key </b>- <a href="https://www.freemyband.com/" target="_blank">¿Cómo
+                        obtenerla?</a></p>
+                <br>
+                <div class="field has-addons">
+                    <div class="control is-expanded">
+                        <input id="auth-key" class="input" type="text" placeholder="708b0f6ccca3ccd5e505deca2d7bde4e">
+                    </div>
+                    <div class="control">
+                        <a id="conectar" class="button is-info">
+                            Conectar...
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+    <script src="js/aes.js"></script>
+    <script type="module" src="js/miband.js"></script>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.js"
+        integrity="sha256-HwWONEZrpuoh951cQD1ov2HUK5zA5DwJ1DNUXaM6FsY=" crossorigin="anonymous"></script>
+
+    <script>
+        let authKey = localStorage.getItem("auth-key");
+        if (authKey) {
+            console.log(authKey);
+            $('#auth-key').val(authKey);
+        }
+        $("#conectar").click(async function () {
+            console.log($('#auth-key').val());
+            authKey = $('#auth-key').val();
+
+            window.addEventListener("connected", (e) => {
+                localStorage.setItem("auth-key", authKey);
+            });
+
+            window.addEventListener("heartrate", (e) => {
+                console.log("BPM ACTUAL:", e.detail);
+            });
+            try {
+                window.miband = new MiBand5(authKey);
+                await window.miband.init();
+            } catch (e) {
+                alert(e.message);
+            }
+        });
+    </script>
+</body>
+
+</html>
