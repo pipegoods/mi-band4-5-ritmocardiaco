@@ -1,3 +1,4 @@
+// Material utilizado para las constantes.
 // https://github.com/VladKolerts/miband4/blob/master/constants.js
 // https://github.com/vshymanskyy/miband-js/blob/master/src/miband.js
 

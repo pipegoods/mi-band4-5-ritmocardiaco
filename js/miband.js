@@ -42,12 +42,12 @@ export class MiBand5 {
     window.dispatchEvent(new CustomEvent("connected"));
     await device.gatt.disconnect();
     const server = await device.gatt.connect();
-    console.log("Connected through gatt");
+    console.log("Conectado a través de gatt");
 
     this.services.miband1 = await server.getPrimaryService(UUIDS.miband1);
     this.services.miband2 = await server.getPrimaryService(UUIDS.miband2);
     this.services.heartrate = await server.getPrimaryService(UUIDS.heartrate);
-    console.log("Services initialized");
+    console.log("Servicios inicializados");
 
     this.chars.auth = await this.services.miband2.getCharacteristic(
       CHAR_UUIDS.auth
@@ -61,7 +61,7 @@ export class MiBand5 {
     this.chars.sensor = await this.services.miband1.getCharacteristic(
       CHAR_UUIDS.sensor
     );
-    console.log("Characteristics initialized");
+    console.log("Características inicializadas");
     await this.authenticate();
   }
 
@@ -73,17 +73,17 @@ export class MiBand5 {
         console.log("Set new key OK");
       } else if (cmd === "100201") {
         const number = value.slice(3);
-        console.log("Received authentication challenge: ", buf2hex(value.slice(3)));
+        console.log("Reto de autenticación recibido: ", buf2hex(value.slice(3)));
         const key = aesjs.utils.hex.toBytes(this.authKey);
         const aesCbc = new aesjs.ModeOfOperation.cbc(key);
         const out = aesCbc.encrypt(new Uint8Array(number));
         const cmd = concatBuffers(new Uint8Array([3, 0]), out);
-        console.log("Sending authentication response");
+        console.log("Envío de la respuesta de autenticación");
         await this.chars.auth.writeValue(cmd);
       } else if (cmd === "100301") {
         await this.onAuthenticated();
       } else if (cmd === "100308") {
-        console.log("Received authentication failure");
+        console.log("Fallo de autentificación recibido");
       } else {
         throw new Error(`Unknown callback, cmd='${cmd}'`);
       }
@@ -92,7 +92,7 @@ export class MiBand5 {
   }
 
   async onAuthenticated() {
-    console.log("Authentication successful");
+    console.log("Autenticación exitosa");
     window.dispatchEvent(new CustomEvent("authenticated"));
     await this.measureHr();
   }
@@ -102,7 +102,7 @@ export class MiBand5 {
     await this.chars.hrControl.writeValue(Uint8Array.from([0x15, 0x02, 0x00]));
     await this.chars.hrControl.writeValue(Uint8Array.from([0x15, 0x01, 0x00]));
     await this.startNotifications(this.chars.hrMeasure, (e) => {
-      console.log("Received heart rate value: ", e.target.value);
+      console.log("Valor de la frecuencia cardíaca recibida: ", e.target.value);
       const heartRate = e.target.value.getInt16();
       window.dispatchEvent(
         new CustomEvent("heartrate", {
@@ -116,7 +116,7 @@ export class MiBand5 {
     this.hrmTimer =
       this.hrmTimer ||
       setInterval(() => {
-        console.log("Pinging heart rate monitor");
+        console.log("Pinging monitor de frecuencia cardíaca");
         this.chars.hrControl.writeValue(Uint8Array.from([0x16]));
       }, 12000);
   }

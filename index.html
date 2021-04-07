@@ -33,9 +33,33 @@
             </div>
         </article>
     </div>
+    <br><br>
+    <div class="container">
+
+        <div class="card">
+           
+            <div class="card-content">
+                <div class="media">
+                    <div class="media-left">
+                        <figure class="image is-48x48">
+                            <img src="https://cdn.pixabay.com/photo/2016/05/06/05/47/heart-rate-1375324_1280.png" alt="Placeholder image">
+                        </figure>
+                    </div>
+                    <div class="media-content">
+                        <p class="title is-4">BPM ACTUAL</p>
+                        <p class="subtitle is-6">Datos tomado de tu Miband</p>
+                    </div>
+                </div>
+
+                <div class="content">
+                    <p id="bpm-actual">0 BPM</p>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="js/aes.js"></script>
     <script type="module" src="js/miband.js"></script>
-    
+
     <script src="https://code.jquery.com/jquery-3.6.0.slim.js"
         integrity="sha256-HwWONEZrpuoh951cQD1ov2HUK5zA5DwJ1DNUXaM6FsY=" crossorigin="anonymous"></script>
 
@@ -55,6 +79,7 @@
 
             window.addEventListener("heartrate", (e) => {
                 console.log("BPM ACTUAL:", e.detail);
+                $('#bpm-actual').text(e.detail + " BPM!!")
             });
             try {
                 window.miband = new MiBand5(authKey);
