@@ -1,4 +1,4 @@
-import {ADVERTISEMENT_SERVICE, CHAR_UUIDS, UUIDS} from "./constants.js";
+import { ADVERTISEMENT_SERVICE, CHAR_UUIDS, UUIDS } from "./constants.js";
 
 function buf2hex(buffer) {
   return Array.prototype.map
@@ -28,10 +28,12 @@ export class MiBand5 {
     this.authKey = authKey;
     this.services = {};
     this.chars = {};
+    this.device = {};
   }
 
   async init() {
-    const device = await navigator.bluetooth.requestDevice({
+    this.device = {};
+    this.device = await navigator.bluetooth.requestDevice({
       filters: [
         {
           services: [ADVERTISEMENT_SERVICE],
@@ -40,8 +42,8 @@ export class MiBand5 {
       optionalServices: [UUIDS.miband2, UUIDS.heartrate, UUIDS.miband1],
     });
     window.dispatchEvent(new CustomEvent("connected"));
-    await device.gatt.disconnect();
-    const server = await device.gatt.connect();
+    await this.device.gatt.disconnect();
+    const server = await this.connect();
     console.log("Conectado a través de gatt");
 
     this.services.miband1 = await server.getPrimaryService(UUIDS.miband1);
@@ -65,6 +67,11 @@ export class MiBand5 {
     await this.authenticate();
   }
 
+  async connect() {
+    console.log("Connecting to Bluetooth Device...");
+    return this.device.gatt.connect();
+  }
+
   async authenticate() {
     await this.startNotifications(this.chars.auth, async (e) => {
       const value = e.target.value.buffer;
@@ -73,7 +80,10 @@ export class MiBand5 {
         console.log("Set new key OK");
       } else if (cmd === "100201") {
         const number = value.slice(3);
-        console.log("Reto de autenticación recibido: ", buf2hex(value.slice(3)));
+        console.log(
+          "Reto de autenticación recibido: ",
+          buf2hex(value.slice(3))
+        );
         const key = aesjs.utils.hex.toBytes(this.authKey);
         const aesCbc = new aesjs.ModeOfOperation.cbc(key);
         const out = aesCbc.encrypt(new Uint8Array(number));
@@ -98,7 +108,7 @@ export class MiBand5 {
   }
 
   async measureHr() {
-    console.log("Starting heart rate measurement")
+    console.log("Starting heart rate measurement");
     await this.chars.hrControl.writeValue(Uint8Array.from([0x15, 0x02, 0x00]));
     await this.chars.hrControl.writeValue(Uint8Array.from([0x15, 0x01, 0x00]));
     await this.startNotifications(this.chars.hrMeasure, (e) => {
@@ -113,17 +123,47 @@ export class MiBand5 {
     await this.chars.hrControl.writeValue(Uint8Array.from([0x15, 0x01, 0x01]));
 
     // Start pinging HRM
+
     this.hrmTimer =
       this.hrmTimer ||
       setInterval(() => {
-        console.log("Pinging monitor de frecuencia cardíaca");
-        this.chars.hrControl.writeValue(Uint8Array.from([0x16]));
+        if (this.device.gatt.connected) {
+          console.log("Pinging monitor de frecuencia cardíaca");
+          this.chars.hrControl.writeValue(Uint8Array.from([0x16]));
+        }
       }, 12000);
   }
 
   async startNotifications(char, cb) {
     await char.startNotifications();
     char.addEventListener("characteristicvaluechanged", cb);
+  }
+
+  async onDisconnectButtonClick() {
+    if (!this.device) {
+      return;
+    }
+    console.log("Disconnecting from Bluetooth Device...");
+    if (this.device.gatt.connected) {
+      console.log("BlueThoot conectado!!");
+      this.device.gatt.disconnect();
+    } else {
+      console.log("> Bluetooth Device is already disconnected");
+    }
+  }
+
+  async onReconnectButtonClick() {
+    if (!this.device) {
+      return;
+    }
+    if (this.device.gatt.connected) {
+      console.log('> Bluetooth Device is already connected');
+      return;
+    }
+    this.connect().then(() => console.log(this.device))
+    .catch(error => {
+      console.log('Argh! ' + error);
+    });
   }
 }
 

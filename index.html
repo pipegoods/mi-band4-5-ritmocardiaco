@@ -29,6 +29,16 @@
                             Conectar...
                         </a>
                     </div>
+                    <div class="control">
+                        <a id="desconectar" class="button is-danger">
+                            Desconectar...
+                        </a>
+                    </div>
+                    <div class="control">
+                        <a id="reconectar" class="button is-success">
+                            reconectar...
+                        </a>
+                    </div>
                 </div>
             </div>
         </article>
@@ -65,7 +75,9 @@
 
     <script>
         let authKey = localStorage.getItem("auth-key");
+        
         if (authKey) {
+            
             console.log(authKey);
             $('#auth-key').val(authKey);
         }
@@ -78,12 +90,32 @@
             });
 
             window.addEventListener("heartrate", (e) => {
+                console.log(e.cancelable);
                 console.log("BPM ACTUAL:", e.detail);
                 $('#bpm-actual').text(e.detail + " BPM!!")
             });
             try {
                 window.miband = new MiBand5(authKey);
                 await window.miband.init();
+
+            } catch (e) {
+                alert(e.message);
+            }
+        });
+
+        $("#desconectar").click(async function () {
+            
+            try {
+                await window.miband.onDisconnectButtonClick();
+            } catch (e) {
+                alert(e.message);
+            }
+        });
+
+        $("#reconectar").click(async function () {
+            
+            try {
+                await window.miband.onReconnectButtonClick();
             } catch (e) {
                 alert(e.message);
             }
